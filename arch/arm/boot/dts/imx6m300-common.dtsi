@@ -1,0 +1,33 @@
+/*
+ * Copyright (C) 2015, Megger Instruments, Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+ */
+
+&epdc {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_epdc_0>;
+	V3P3-supply = <&V3P3_reg>;
+	VCOM-supply = <&VCOM_reg>;
+	DISPLAY-supply = <&DISPLAY_reg>;
+	status = "okay";
+};
+
+&ldb {
+	ipu_id = <0>;
+	sec_ipu_id = <0>;
+};
+
+&mxcfb1 {
+	status = "okay";
+};
+
+&mxcfb2 {
+	status = "okay";
+};
+
+&pxp {
+	status = "okay";
+};
