@@ -25,10 +25,25 @@
 	memory {
 		reg = <0x10000000 0x80000000>;
 	};
-	//
-	//	LVDS CABC Not implemented on M300
-	//
-	/*
+
+	regulators {
+		compatible = "simple-bus";
+		
+		sw1a_reg: sw1ab {
+			regulator-min-microvolt = <300000>;
+			regulator-max-microvolt = <1500000>;
+			regulator-boot-on;
+			regulator-always-on;
+		};
+		
+		sw1c_reg: sw1c {
+			regulator-min-microvolt = <300000>;
+			regulator-max-microvolt = <1500000>;
+			regulator-boot-on;
+			regulator-always-on;
+		};
+	};
+		
 	hannstar_cabc {
 		compatible = "hannstar,cabc";
 
@@ -40,8 +55,7 @@
 			gpios = <&gpio6 16 GPIO_ACTIVE_HIGH>;
 		};
 	};
-	*/
-	
+
 	leds {
 		compatible = "gpio-leds";
 
@@ -68,14 +82,12 @@
 			linux,code = <114>; /* KEY_VOLUMEDOWN */
 		};
 	};
-	//
-	//	SGTL5000 Audio Codec, attached to AUD 3 (SSI3) and I2C 1
-	//
+
 	sound {
 		compatible = "fsl,imxm300-sgtl5000",
 			   "fsl,imx-audio-sgtl5000";
 		model = "sgtl5000-audio";
-		ssi-controller = <&ssi3>;
+		ssi-controller = <&ssi1>;
 		audio-codec = <&codec>;
 		audio-routing =
 			"MIC_IN", "Mic Jack",
@@ -91,15 +103,13 @@
 		model = "imx-audio-hdmi";
 		hdmi-controller = <&hdmi_audio>;
 	};
-	//
-	//	7" LVDS Display (800x480 - WVGA)
-	//
+
 	mxcfb1: fb@0 {
 		compatible = "fsl,mxc_sdc_fb";
 		disp_dev = "ldb";
-		interface_pix_fmt = "RGB24";
-		mode_str ="LVDS7-800x480";
-		default_bpp = <24>;
+		interface_pix_fmt = "RGB666";
+		mode_str ="LDB-XGA";
+		default_bpp = <16>;
 		int_clk = <0>;
 		late_init = <0>;
 		status = "disabled";
@@ -115,41 +125,24 @@
 		late_init = <0>;
 		status = "disabled";
 	};
-	//
-	//	4.3" Parallel RGB Display (480x272 - WQVGA)
-	//
+
 	mxcfb3: fb@2 {
 		compatible = "fsl,mxc_sdc_fb";
 		disp_dev = "lcd";
-		interface_pix_fmt = "RGB24";
-		mode_str ="LCD4.3-480x272";
-		default_bpp = <24>;
+		interface_pix_fmt = "RGB565";
+		mode_str ="CLAA-WVGA";
+		default_bpp = <16>;
 		int_clk = <0>;
 		late_init = <0>;
 		status = "disabled";
 	};
-	//
-	//	7" Parallel RGB Display (800x480 - WVGA)
-	//
+
 	mxcfb4: fb@3 {
 		compatible = "fsl,mxc_sdc_fb";
-		disp_dev = "lcd";
-		interface_pix_fmt = "RGB24";
-		mode_str ="LCD7-800x480";
-		default_bpp = <24>;
-		int_clk = <0>;
-		late_init = <0>;
-		status = "disabled";
-	};
-	//
-	//	10" Parallel RGB Display (1024x600 - WSVGA)
-	//
-	mxcfb5: fb@4 {
-		compatible = "fsl,mxc_sdc_fb";
-		disp_dev = "lcd";
-		interface_pix_fmt = "RGB24";
-		mode_str = "LCD10-1024x600";
-		default_bpp = <24>;
+		disp_dev = "ldb";
+		interface_pix_fmt = "RGB666";
+		mode_str ="LDB-XGA";
+		default_bpp = <16>;
 		int_clk = <0>;
 		late_init = <0>;
 		status = "disabled";
@@ -159,7 +152,7 @@
 		compatible = "fsl,lcd";
 		ipu_id = <0>;
 		disp_id = <0>;
-		default_ifmt = "RGB24";
+		default_ifmt = "RGB565";
 		pinctrl-names = "default";
 		pinctrl-0 = <&pinctrl_ipu1_1>;
 		status = "okay";
@@ -212,12 +205,7 @@
 	soc-supply = <&sw1c_reg>;
 	pu-supply = <&pu_dummy>; /* use pu_dummy if VDDSOC share with VDDPU */
 };
-//
-//	SPI1 - With two select lines (ECSPI1_SS1 and ECSPI2_SS2) on M300 
-//
-//	M300 carrier board has 1MB NOR FLASH on SPI, as two 4Mb devices on
-//	SS1 and SS2
-//
+
 &ecspi1 {
 	fsl,spi-num-chipselects = <1>;
 	cs-gpios = <&gpio4 9 0>;
@@ -234,10 +222,6 @@
 	};
 };
 
-//
-//	Fast Ethernet Connector - Implemented as 10/100Mbs on M300 (not 1Gbs); PHY is 
-//	KSZ8081RNBIA
-//
 &fec {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_enet_1>;
@@ -245,9 +229,6 @@
 	status = "okay";
 };
 
-//
-//	General Power Controller
-//
 &gpc {
 	fsl,cpu_pupscr_sw2iso = <0xf>;
 	fsl,cpu_pupscr_sw = <0xf>;
@@ -258,16 +239,10 @@
 	pu-supply = <&pu_dummy>; /* ldo-bypass:use pu_dummy if VDDSOC share with VDDPU */
 };
 
-//
-//	Graphics Processor
-//
 &gpu {
 	pu-supply = <&pu_dummy>; /* ldo-bypass:use pu_dummy if VDDSOC share with VDDPU */
 };
 
-//
-//	Audio codec Control I2C - Port 1 Address 0x14
-//
 &i2c1 {
 	clock-frequency = <100000>;
 	pinctrl-names = "default";
@@ -283,9 +258,6 @@
 
 };
 
-//
-//	I2C Port 3 - Goes to PCIe
-//
 &i2c3 {
         clock-frequency = <100000>;
         pinctrl-names = "default";
@@ -293,9 +265,6 @@
         status = "okay";
 };
 
-//
-//	I2C Port 4
-//
 &i2c4 {
         clock-frequency = <100000>;
         pinctrl-names = "default";
@@ -323,10 +292,10 @@
 				MX6QDL_PAD_NANDF_CS3__GPIO6_IO16 0x80000000
 				MX6QDL_PAD_EIM_D26__GPIO3_IO26 0x80000000
 				MX6QDL_PAD_EIM_CS1__GPIO2_IO24 0x80000000
-				MX6QDL_PAD_ENET_RXD0__GPIO1_IO27 0x80000000
+				//MX6QDL_PAD_ENET_RXD0__GPIO1_IO27 0x80000000
 				MX6QDL_PAD_EIM_A25__GPIO5_IO02 0x80000000
 				MX6QDL_PAD_EIM_D23__GPIO3_IO23 0x80000000
-				MX6QDL_PAD_ENET_TXD1__GPIO1_IO29 0x80000000
+				//MX6QDL_PAD_ENET_TXD1__GPIO1_IO29 0x80000000
 				MX6QDL_PAD_EIM_D22__GPIO3_IO22  0x80000000
 				MX6QDL_PAD_NANDF_CS0__GPIO6_IO11 0x80000000
 				MX6QDL_PAD_NANDF_CS1__GPIO6_IO14 0x80000000
@@ -355,9 +324,6 @@
 	status = "okay";
 };
 
-//
-//	MIPI Camera Interface
-//
 &mipi_csi {
 	status = "okay";
 	ipu_id = <0>;
@@ -366,9 +332,6 @@
 	lanes = <2>;
 };
 
-//
-//	MIPI Display Interface - Not available on M300
-//
 &mipi_dsi {
 	dev_id = <0>;
 	disp_id = <1>;
@@ -378,70 +341,47 @@
 	status = "disabled";
 };
 
-//
-//	PCIe 
-//
 &pcie {
 	power-on-gpio = <&gpio3 19 0>;
 	reset-gpio = <&gpio7 12 0>;
 	status = "okay";
 };
 
-//
-//	PWM1 - LVDS Backlight Brightness Control 
-//
+
 &pwm1 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_pwm1_1>;
 	status = "okay";
 };
 
-//
-//	SSI1 (I2S 1) - Not available on M300
-//
-&ssi1 {
+&ssi2 {
 	fsl,mode = "i2s-slave";
-	status = "disabled";
+	status = "okay";
 };
 
-//
-//	UART1 - (M300 name UART0) - Debug console
-//
 &uart1 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_uart1_2>;
 	status = "okay";
 };
 
-//
-//	UART4 - (M300 name UART1) - Instrument control
-//
 &uart4 {
 	pinctrl-names = "default";
-	pinctrl-0 = <pinctrl_uart4_1>;
+	pinctrl-0 = <&pinctrl_uart4_1>;
 	status = "okay";
 };
 
-//
-//	UART5 - (M300 name UART2)
-//
 &uart5 {
 	pinctrl-names = "default";
-	pinctrl-0 = <pinctrl_uart5_1>;
+	pinctrl-0 = <&pinctrl_uart5_1>;
 	status = "okay";
 };
 
-//
-//	USB H1 - USB2.0 Host port
-//
 &usbh1 {
 	vbus-supply = <&reg_usb_h1_vbus>;
 	status = "okay";
 };
 
-//
-//	USB OTG - USB 2.0 OTG port
-//
 &usbotg {
 	vbus-supply = <&reg_usb_otg_vbus>;
 	pinctrl-names = "default";
@@ -450,26 +390,18 @@
 	status = "okay";
 };
 
-//
-//	uSD HC 2 - M300 Boot device on module (1 or 4-bit mode only)
-//
 &usdhc2 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_usdhc2_1>;
-	//
-	//	Card detect (GPIO1-IO4) pulled low, no write protect
-	//
-	cd-gpios = <&gpio1 4 0>;
+	//cd-gpios = <&gpio2 2 0>;
 	//wp-gpios = <&gpio2 3 0>;
+	bus-width = <4>;
 	no-1-8-v;
 	keep-power-in-suspend;
 	enable-sdio-wakeup;
 	status = "okay";
 };
-
-//
-//	uSD HC 3 - Not available on M300
-//
+/*
 &usdhc3 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_usdhc3_1>;
@@ -478,16 +410,12 @@
 	no-1-8-v;
 	keep-power-in-suspend;
 	enable-sdio-wakeup;
-	status = "disabled";
+	status = "okay";
 };
-
-//
-//	uSD HC 4 - Extension SD card interface (1, 4 or 8-bit)
-//
+*/
 &usdhc4 {
         pinctrl-names = "default";
         pinctrl-0 = <&pinctrl_usdhc4_1>;
-	cd-gpios = <&gpio6 8 0>;
         bus-width = <8>;
         non-removable;
         no-1-8-v;
@@ -495,9 +423,6 @@
         status = "okay";
 };
 
-//
-//	Video Processor
-//
 &vpu {
 	pu-supply = <&pu_dummy>; /* ldo-bypass:use pu_dummy if VDDSOC share with VDDPU */
 };
