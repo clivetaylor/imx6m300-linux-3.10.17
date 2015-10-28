@@ -163,7 +163,7 @@
 			};
 			/*
 			 *	Electronic Paper Device Controller (EPDC)
-			 *	Not used in M300
+			 *	Not used on M300
 			 *
 			epdc: epdc@020f4000 {
 				compatible = "fsl,imx6dl-epdc";
@@ -185,8 +185,8 @@
 
 		aips2: aips-bus@02100000 {
 			/*
-			 *	Mobile Industry Processor Interface (MIPI) Dispalay Interface (DSI)
-			 * 	Not used in M300
+			 *	Mobile Industry Processor Interface (MIPI) Display Interface (DSI)
+			 *  Not used in M300
 			 *
 			mipi_dsi: mipi@021e0000 {
 				compatible = "fsl,imx6dl-mipi-dsi";
@@ -205,15 +205,13 @@
 				compatible = "fsl,imx1-i2c";
 				reg = <0x021f8000 0x4000>;
 				interrupts = <0 35 0x04>;
-				status = "disabled";
+				status = "okay";
 			};
 		};
 	};
 };
 
 /*
- * IOMUXC Settings for EPDC - Not used in M300
- *
 &iomuxc {
 	epdc {
 		pinctrl_epdc_0: epdcgrp-0 {

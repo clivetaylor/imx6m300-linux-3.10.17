@@ -25,7 +25,10 @@
 	memory {
 		reg = <0x10000000 0x80000000>;
 	};
-
+	
+	/*
+	 *	Add the regulators for the SoC and USB
+	 */
 	regulators {
 		compatible = "simple-bus";
 		
@@ -50,14 +53,18 @@
 			regulator-always-on;
 		};
 		
-		reg_usb_otg_vbus: reg_usb_o {
+		reg_usb_otg_vbus: reg_usb_otg {
 			regulator-min-microvolt = <5000000>;
 			regulator-max-microvolt = <5000000>;
 			regulator-boot-on;
 			regulator-always-on;
 		};
 	};
-		
+
+	//
+	//	LVDS CABC Not implemented on M300
+	//
+	/*
 	hannstar_cabc {
 		compatible = "hannstar,cabc";
 
@@ -69,7 +76,8 @@
 			gpios = <&gpio6 16 GPIO_ACTIVE_HIGH>;
 		};
 	};
-
+	*/
+	
 	leds {
 		compatible = "gpio-leds";
 
@@ -96,12 +104,14 @@
 			linux,code = <114>; /* KEY_VOLUMEDOWN */
 		};
 	};
-
+	//
+	//	SGTL5000 Audio Codec, attached to AUD 3 (SSI3) and I2C 1
+	//
 	sound {
 		compatible = "fsl,imxm300-sgtl5000",
 			   "fsl,imx-audio-sgtl5000";
 		model = "sgtl5000-audio";
-		ssi-controller = <&ssi1>;
+		ssi-controller = <&ssi3>;
 		audio-codec = <&codec>;
 		audio-routing =
 			"MIC_IN", "Mic Jack",
@@ -117,13 +127,15 @@
 		model = "imx-audio-hdmi";
 		hdmi-controller = <&hdmi_audio>;
 	};
-
+	//
+	//	7" LVDS Display (800x480 - WVGA)
+	//
 	mxcfb1: fb@0 {
 		compatible = "fsl,mxc_sdc_fb";
 		disp_dev = "ldb";
-		interface_pix_fmt = "RGB666";
-		mode_str ="LDB-XGA";
-		default_bpp = <16>;
+		interface_pix_fmt = "RGB24";
+		mode_str ="LVDS7-800x480";
+		default_bpp = <24>;
 		int_clk = <0>;
 		late_init = <0>;
 		status = "disabled";
@@ -139,24 +151,41 @@
 		late_init = <0>;
 		status = "disabled";
 	};
-
+	//
+	//	4.3" Parallel RGB Display (480x272 - WQVGA)
+	//
 	mxcfb3: fb@2 {
 		compatible = "fsl,mxc_sdc_fb";
 		disp_dev = "lcd";
-		interface_pix_fmt = "RGB565";
-		mode_str ="CLAA-WVGA";
-		default_bpp = <16>;
+		interface_pix_fmt = "RGB24";
+		mode_str ="LCD4.3-480x272";
+		default_bpp = <24>;
 		int_clk = <0>;
 		late_init = <0>;
 		status = "disabled";
 	};
-
+	//
+	//	7" Parallel RGB Display (800x480 - WVGA)
+	//
 	mxcfb4: fb@3 {
 		compatible = "fsl,mxc_sdc_fb";
-		disp_dev = "ldb";
-		interface_pix_fmt = "RGB666";
-		mode_str ="LDB-XGA";
-		default_bpp = <16>;
+		disp_dev = "lcd";
+		interface_pix_fmt = "RGB24";
+		mode_str ="LCD7-800x480";
+		default_bpp = <24>;
+		int_clk = <0>;
+		late_init = <0>;
+		status = "disabled";
+	};
+	//
+	//	10" Parallel RGB Display (1024x600 - WSVGA)
+	//
+	mxcfb5: fb@4 {
+		compatible = "fsl,mxc_sdc_fb";
+		disp_dev = "lcd";
+		interface_pix_fmt = "RGB24";
+		mode_str = "LCD10-1024x600";
+		default_bpp = <24>;
 		int_clk = <0>;
 		late_init = <0>;
 		status = "disabled";
@@ -166,7 +195,7 @@
 		compatible = "fsl,lcd";
 		ipu_id = <0>;
 		disp_id = <0>;
-		default_ifmt = "RGB565";
+		default_ifmt = "RGB24";
 		pinctrl-names = "default";
 		pinctrl-0 = <&pinctrl_ipu1_1>;
 		status = "okay";
@@ -199,7 +228,6 @@
 		compatible = "fsl,mxc_v4l2_output";
 		status = "okay";
 	};
-	
 	/*
 	mipi_dsi_reset: mipi-dsi-reset {
 		compatible = "gpio-reset";
@@ -207,7 +235,7 @@
 		reset-delay-us = <50>;
 		#reset-cells = <0>;
 	};
-	*/
+	 */
 };
 
 &audmux {
@@ -221,33 +249,46 @@
 	soc-supply = <&sw1c_reg>;
 	pu-supply = <&pu_dummy>; /* use pu_dummy if VDDSOC share with VDDPU */
 };
-
+//
+//	SPI1 - With two select lines (ECSPI1_SS1 and ECSPI2_SS2) on M300 
+//
+//	M300 carrier board has 1MB NOR FLASH on SPI, as two 4Mb devices on
+//	SS1 and SS2
+//
 &ecspi1 {
-	/*
 	fsl,spi-num-chipselects = <1>;
 	cs-gpios = <&gpio4 9 0>;
-	 */
 	pinctrl-names = "default";
-	pinctrl-0 = <&pinctrl_ecspi1_1>;
+	pinctrl-0 = <&pinctrl_ecspi1_2>;
 	status = "okay";
+	
 	/*
-	flash: m25p80@0 {
+	 *	Serial flash device on Mithras carrier board - used to test the SPI interface
+	 *	The device is actually AT25SF041 (4Mb) - the kernel detects it as MR25H256
+	 */
+	flash: mr25h256@0 {
 		#address-cells = <1>;
 		#size-cells = <1>;
 		compatible = "st,m25p32";
 		spi-max-frequency = <20000000>;
 		reg = <0>;
 	};
-	 */
 };
 
+//
+//	Fast Ethernet Connector - Implemented as 10/100Mbs on M300 (not 1Gbs); PHY is 
+//	KSZ8081RNBIA RMII mode
+//
 &fec {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_enet_1>;
-	phy-mode = "rgmii";
+	phy-mode = "rmii";
 	status = "okay";
 };
 
+//
+//	General Power Controller
+//
 &gpc {
 	fsl,cpu_pupscr_sw2iso = <0xf>;
 	fsl,cpu_pupscr_sw = <0xf>;
@@ -258,10 +299,16 @@
 	pu-supply = <&pu_dummy>; /* ldo-bypass:use pu_dummy if VDDSOC share with VDDPU */
 };
 
+//
+//	Graphics Processor
+//
 &gpu {
 	pu-supply = <&pu_dummy>; /* ldo-bypass:use pu_dummy if VDDSOC share with VDDPU */
 };
 
+//
+//	Audio codec Control I2C - Port 1 Address 0x14
+//
 &i2c1 {
 	clock-frequency = <100000>;
 	pinctrl-names = "default";
@@ -277,6 +324,9 @@
 
 };
 
+//
+//	I2C Port 3 - Goes to PCIe
+//
 &i2c3 {
         clock-frequency = <100000>;
         pinctrl-names = "default";
@@ -284,6 +334,9 @@
         status = "okay";
 };
 
+//
+//	I2C Port 4
+//
 &i2c4 {
         clock-frequency = <100000>;
         pinctrl-names = "default";
@@ -299,15 +352,15 @@
 		pinctrl_hog_1: hoggrp-1 {
 			fsl,pins = <
 				MX6QDL_PAD_GPIO_4__GPIO1_IO04   0x80000000
-				//MX6QDL_PAD_GPIO_5__GPIO1_IO05   0x80000000
+				//MX6QDL_PAD_GPIO_5__GPIO1_IO05   0x80000000	// Used for I2C3 SCLK
 				MX6QDL_PAD_NANDF_D0__GPIO2_IO00 0x80000000
 				MX6QDL_PAD_NANDF_D1__GPIO2_IO01 0x80000000
 				MX6QDL_PAD_NANDF_D2__GPIO2_IO02 0x80000000
 				MX6QDL_PAD_NANDF_D3__GPIO2_IO03 0x80000000
-				MX6QDL_PAD_NANDF_ALE__GPIO6_IO08 0x80000000
+				//MX6QDL_PAD_NANDF_ALE__GPIO6_IO08 0x80000000	// Used for SD4 (CD Pin)
 				MX6QDL_PAD_NANDF_CLE__GPIO6_IO07 0x80000000
 				MX6QDL_PAD_GPIO_0__CCM_CLKO1    0x130b0
-				MX6QDL_PAD_NANDF_CS2__GPIO6_IO15 0x80000000
+				//MX6QDL_PAD_NANDF_CS2__GPIO6_IO15 0x80000000
 				//MX6QDL_PAD_NANDF_CS3__GPIO6_IO16 0x80000000
 				MX6QDL_PAD_EIM_D26__GPIO3_IO26 0x80000000
 				MX6QDL_PAD_EIM_CS1__GPIO2_IO24 0x80000000
@@ -319,15 +372,13 @@
 				MX6QDL_PAD_NANDF_CS0__GPIO6_IO11 0x80000000
 				MX6QDL_PAD_NANDF_CS1__GPIO6_IO14 0x80000000
 				MX6QDL_PAD_EIM_EB3__GPIO2_IO31 0x80000000
-				MX6QDL_PAD_EIM_D16__GPIO3_IO16 0x80000000
+				//MX6QDL_PAD_EIM_D16__GPIO3_IO16 0x80000000
 				MX6QDL_PAD_EIM_DA9__GPIO3_IO09 0x80000000
-				MX6QDL_PAD_GPIO_4__GPIO1_IO04 0x80000000
-				//MX6QDL_PAD_GPIO_5__GPIO1_IO05 0x80000000
 				MX6QDL_PAD_EIM_D29__GPIO3_IO29 0x80000000
 				MX6QDL_PAD_SD3_RST__GPIO7_IO08 0x80000000
-				MX6QDL_PAD_GPIO_9__GPIO1_IO09 0x80000000
+				//MX6QDL_PAD_GPIO_9__GPIO1_IO09 0x80000000
 				MX6QDL_PAD_GPIO_1__WDOG2_B 0x80000000
-				MX6QDL_PAD_GPIO_2__GPIO1_IO02 0x80000000
+				//MX6QDL_PAD_GPIO_2__GPIO1_IO02 0x80000000
 			>;
 		};
 	};
@@ -343,6 +394,9 @@
 	status = "okay";
 };
 
+//
+//	MIPI Camera Interface
+//
 &mipi_csi {
 	status = "okay";
 	ipu_id = <0>;
@@ -352,6 +406,8 @@
 };
 
 /*
+ *	MIPI Display Interface - Not available on M300
+ *
 &mipi_dsi {
 	dev_id = <0>;
 	disp_id = <1>;
@@ -360,69 +416,101 @@
 	resets = <&mipi_dsi_reset>;
 	status = "disabled";
 };
-*/
+ */
 
+//
+//	PCIe 
+//
 &pcie {
-	power-on-gpio = <&gpio3 19 0>;
-	reset-gpio = <&gpio7 12 0>;
+	power-on-gpio = <&gpio5 20 0>;
 	status = "okay";
 };
 
-
+//
+//	PWM1 - LVDS Backlight Brightness Control 
+//
 &pwm1 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_pwm1_1>;
 	status = "okay";
 };
 
-&ssi2 {
+//
+//	SSI1 (I2S 1) - Not available on M300
+//
+&ssi1 {
 	fsl,mode = "i2s-slave";
-	status = "okay";
+	status = "disabled";
 };
 
+//
+//	UART1 - (M300 name UART0) - Debug console
+//
 &uart1 {
 	pinctrl-names = "default";
-	pinctrl-0 = <&pinctrl_uart1_2>;
+	pinctrl-0 = <&pinctrl_uart1_1>;
 	status = "okay";
 };
 
+//
+//	UART4 - (M300 name UART1) - Instrument control
+//
 &uart4 {
 	pinctrl-names = "default";
-	pinctrl-0 = <&pinctrl_uart4_1>;
+	pinctrl-0 = <pinctrl_uart4_1>;
 	status = "okay";
 };
 
+//
+//	UART5 - (M300 name UART2)
+//
 &uart5 {
 	pinctrl-names = "default";
-	pinctrl-0 = <&pinctrl_uart5_1>;
+	pinctrl-0 = <pinctrl_uart5_1>;
 	status = "okay";
 };
 
+//
+//	USB H1 - USB2.0 Host port
+//
 &usbh1 {
 	vbus-supply = <&reg_usb_h1_vbus>;
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_usbh1_1>;
 	status = "okay";
 };
 
+//
+//	USB OTG - USB 2.0 OTG port
+//
 &usbotg {
 	vbus-supply = <&reg_usb_otg_vbus>;
 	pinctrl-names = "default";
-	pinctrl-0 = <&pinctrl_usbotg_2>;
+	pinctrl-0 = <&pinctrl_usbotg_1>;
 	disable-over-current;
 	status = "okay";
 };
 
+//
+//	uSD HC 2 - M300 Boot device on module (1 or 4-bit mode only)
+//
 &usdhc2 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_usdhc2_1>;
-	//cd-gpios = <&gpio2 2 0>;
+	//
+	//	Card detect (GPIO1-IO4) pulled low, no write protect
+	//
+	cd-gpios = <&gpio1 4 0>;
 	//wp-gpios = <&gpio2 3 0>;
-	bus-width = <4>;
 	no-1-8-v;
 	keep-power-in-suspend;
 	enable-sdio-wakeup;
 	status = "okay";
 };
+
 /*
+ *	uSD HC 3 - Not available on M300
+ *
 &usdhc3 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_usdhc3_1>;
@@ -431,19 +519,27 @@
 	no-1-8-v;
 	keep-power-in-suspend;
 	enable-sdio-wakeup;
-	status = "okay";
+	status = "disabled";
 };
-*/
+ */
+ 
+//
+//	uSD HC 4 - Extension SD card interface (1, 4 or 8-bit)
+//
 &usdhc4 {
-        pinctrl-names = "default";
-        pinctrl-0 = <&pinctrl_usdhc4_1>;
-        bus-width = <8>;
-        non-removable;
-        no-1-8-v;
+    pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_usdhc4_1>;
+	//cd-gpios = <&gpio6 8 0>;
+	bus-width = <8>;
+    non-removable;
+    no-1-8-v;
 	keep-power-in-suspend;
-        status = "okay";
+    status = "okay";
 };
 
+//
+//	Video Processor
+//
 &vpu {
 	pu-supply = <&pu_dummy>; /* ldo-bypass:use pu_dummy if VDDSOC share with VDDPU */
 };
